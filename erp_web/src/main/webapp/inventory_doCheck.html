@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>盘盈盘亏管理</title>
+<link rel="stylesheet" type="text/css" href="ui/themes/default/easyui.css"></link>
+<link rel="stylesheet" type="text/css" href="ui/themes/icon.css"></link>
+<link rel="stylesheet" type="text/css" href="css/table.css"></link>
+<script type="text/javascript" src="ui/jquery.min.js"></script>
+<script type="text/javascript" src="ui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="ui/locale/easyui-lang-zh_CN.js"></script>
+<script type="text/javascript" src="ui/jquery.serializejson.min.js"></script>
+<script type="text/javascript" src="ui/date.js"></script>
+<script type="text/javascript" src="js/utils.js"></script>
+<script type="text/javascript" src="js/inventory_doCheck.js"></script>
+</head>
+<body>
+	<table id="grid"></table>
+	<!-- 盘盈盘亏审核窗口 -->
+	<div id="inventoryDlg" style="padding:2px;">
+	    <table class="hovertable" id="inventoryTable">
+	        <tr>
+	            <td width="60px">编号</td>
+	            <td id="uuid"></td>
+	        </tr>
+	        <tr>
+	            <td>登记日期</td>
+	            <td id="createtime"></td>
+	        </tr>
+	        <tr>
+	            <td>商品</td>
+	            <td id="goodsName"></td>
+	        </tr>
+	        <tr>
+	            <td>仓库</td>
+	            <td id="storeName"></td>
+	        </tr>
+	        <tr>
+	            <td>数量</td>
+	            <td id="num"></td>
+	        </tr>
+	        <tr>
+	            <td>类型</td>
+	            <td id="type"></td>
+	        </tr>
+	        <tr>
+	            <td>备注</td>
+	            <td id="remark"></td>
+	        </tr>
+	        
+	        
+	    </table>
+	</div>
+</body>
+</html>

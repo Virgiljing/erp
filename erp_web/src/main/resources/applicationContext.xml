@@ -1,0 +1,318 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:jaxws="http://cxf.apache.org/jaxws"   
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd 
+        http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd
+        ">
+        
+    
+    <!-- 启动shiro注解 -->
+    <bean
+        class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+            depends-on="lifecycleBeanPostProcessor" >
+        <!-- 默认使用JDK代理 ，如被代理类没有实现接口，必须使用下列配置开启 cglib代理  -->
+        <!--<property name="proxyTargetClass" value="true" />-->
+    </bean> 
+    <bean
+        class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager" />
+    </bean>
+    
+    <!-- 对安全管理器 增强代码 ， spring 后处理器 -->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/> 
+    
+    <!-- 数据源 -->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="oracle.jdbc.driver.OracleDriver"></property>
+        <property name="jdbcUrl" value="jdbc:oracle:thin:@192.168.43.200:1521:ORCL"></property>
+        <property name="user" value="heima_erp08"></property>
+        <property name="password" value="heima_erp08"/>
+    </bean>
+
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.Oracle10gDialect</prop>
+                <prop key="hibernate.show_sql">true</prop>
+                <prop key="hibernate.format_sql">false</prop>
+            </props>
+        </property>
+        <property name="packagesToScan" value="cn.itcast.erp.entity">
+        </property>
+    </bean>
+
+    <context:component-scan base-package="cn.itcast.erp.dao,cn.itcast.erp.biz,cn.itcast.erp.action,cn.itcast.erp.util,cn.itcast.erp.job"></context:component-scan>
+
+    <bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <context:property-placeholder location="classpath:mail.properties"/>
+    
+    <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+       <!-- 邮件协议 -->
+        <property name="protocol" value="${mail.protocol}"/>
+        <!-- 邮件服务器地址 -->
+        <property name="host" value="${mail.host}"/>
+        <!-- 端口 -->
+        <property name="port" value="${mail.port}" />
+        <property name="username" value="${mail.username}"/>
+        <property name="password" value="${mail.password}"/>
+        <property name="javaMailProperties">
+            <props>
+                <!-- 使用用户名和密码来登陆邮件服务器 -->
+                <prop key="mail.smtp.auth">true</prop>
+                <!-- 使用ssl安全协议 -->
+                <prop key="mail.smtp.ssl.enable">true</prop>
+            </props>
+        </property>
+    </bean>
+    
+    <!-- 任务类描述 -->
+    <bean id="jobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="mailJob"></property>
+        <property name="targetMethod" value="doJob"></property>
+        <!-- 默认为并发：如果我的job没有执行完，当trigger一触发时，它会开启另一线程 -->
+        <property name="concurrent" value="false"></property>
+    </bean>
+    <!-- 触发器  -->
+    <bean id="myTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="jobDetail"></property>
+        <!-- 定义触发的时间点: 七子表达式 -->
+        <property name="cronExpression" value="0/20 * * * * ?"></property>
+    </bean>
+    <!-- 任务调度管理容器
+    <bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean" >
+        <property name="triggers">
+            <list>
+                <ref bean="myTrigger"/>
+            </list>
+        </property>
+    </bean>
+    -->
+    
+    <!-- 创建客户端，指向服务的/weatherWs服务 -->
+    <jaxws:client id="waybillClient" address="http://localhost:9090/bos/cxf/waybillWs?wsdl"
+        serviceClass="com.redsun.bos.ws.impl.IWaybillWs"
+    ></jaxws:client>
+    
+    
+    <!-- shiro filter -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <!-- 安全管理器：shiro的核心大脑, 真正干活 -->
+        <property name="securityManager" ref="securityManager"></property>
+        <!-- 认证：如果用户没有登陆，则跳转到这个页面 -->
+        <property name="loginUrl" value="login.html"></property>
+        <!-- 认证：登陆成功后跳转的页面 -->
+        <property name="successUrl" value="index.html"></property>
+        <!-- 授权：用户没有访问的权限时，跳转到这个页面 -->
+        <property name="unauthorizedUrl" value="error.html"></property>
+        <property name="filters">
+            <map>
+                <!-- key如果=内置的过滤器名字，则覆盖掉内置过滤器，使用新的 
+                     key如果跟内容的过滤器名字不一致，就变成加入新的过滤器
+                -->
+                <entry key="perms2" value-ref="myFilter"></entry>
+            </map>
+        </property>
+        <!-- 过滤链定义：定义不同的url使用不同的过滤器 -->
+        <property name="filterChainDefinitions">
+            <value>
+                # value标签里内容的语法与java properties一样
+                # 静态资源所有人都可以访问
+                # 存放到map中，=左边为key，右边为value，如果url出现重复，后者生效
+                /error.html =anon
+                /login!*.action=anon
+                /login.html=anon
+                /adminjs/**=anon
+                /css/**=anon
+                /images/**=anon
+                /js/**=anon
+                /ui/**=anon
+                #商品
+                /goods.html=perms["商品"]
+                /goods!get.action=perms["商品"]
+                /goods!add.action=perms["商品"]
+                /goods!update.action=perms["商品"]
+                /goods!delete.action=perms["商品"]
+                /goods!listByPage.action=perms["商品"]
+
+                #商品类型
+                /goodstype.html=perms["商品类型"]
+                /goodstype!get.action=perms["商品类型"]
+                /goodstype!add.action=perms["商品类型"]
+                /goodstype!update.action=perms["商品类型"]
+                /goodstype!delete.action=perms["商品类型"]
+                /goodstype!listByPage.action=perms["商品类型"]
+
+                #员工
+                /emp.html=perms["员工"]
+                /emp!get.action=perms["员工"]
+                /emp!add.action=perms["员工"]
+                /emp!update.action=perms["员工"]
+                /emp!delete.action=perms["员工"]
+
+                #部门
+                /dep.html=perms["部门"]
+                /dep!get.action=perms["部门"]
+                /dep!add.action=perms["部门"]
+                /dep!update.action=perms["部门"]
+                /dep!delete.action=perms["部门"]
+                /dep!listByPage.action=perms["部门"]
+
+                #供应商及客户
+                /supplier.html=perms2["供应商","客户"]
+                /supplier!get.action=perms2["供应商","客户"]
+                /supplier!add.action=perms2["供应商","客户"]
+                /supplier!update.action=perms2["供应商","客户"]
+                /supplier!delete.action=perms2["供应商","客户"]
+                /supplier!listByPage.action=perms2["供应商","客户"]
+
+                #仓库
+                /store.html=perms[仓库]
+                /store!get.action=perms[仓库]
+                /store!add.action=perms[仓库]
+                /store!update.action=perms[仓库]
+                /store!delete.action=perms[仓库]
+                /store!listByPage.action=perms[仓库]
+
+                #订单
+                
+                /orders_in.html=perms["采购订单查询"]
+                /orders_in_myOrders.html=perms["我的采购订单"]
+                /orders_doCheck.html=perms["采购审核"]
+                /orders!doCheck.action=perms["采购审核"]
+                /orders_doStart.html=perms["采购确认"]
+                /orders!doStart.action=perms["采购确认"]
+                /orders_doInStore.html=perms["采购入库"]
+                /orders!doInStore.action=perms["采购入库"]
+                
+                /orders_out.html=perms["销售订单查询"]
+                /orders_out_myOrders.html=perms["我的销售订单"]
+                /orders_doOutStore.html=perms["销售出库"]
+                /orders!doOutStore.action=perms["销售出库"]
+                
+                /orders!listByPage.action=perms2["采购订单查询","销售订单查询","采购审核","采购确认","采购入库","销售出库"]
+                /orders!myListByPage.action=perms2["我的采购订单","我的销售订单"]
+                /orders!add.action=perms["我的采购订单"]
+                /orders!add_out.action=perms["我的销售订单"]
+                #库存
+                /storedetail.html=perms["库存查询"]
+                /storedetail!listByPage.action=perms["库存查询"]
+
+                #库存变更记录
+                /storeoper.html=perms["库存变更记录"]
+                /storeoper!listByPage.action=perms2["库存变更记录","库存查询"]
+
+                #统计报表
+                /report_orders.html=perms["销售统计"]
+                /report!orderReport.action=perms["销售统计"]
+                /report_trend.html=perms["销售趋势"]
+                /report!trendReport.action=perms["销售趋势"]
+
+                #角色设置
+                /role.html=perms["角色管理"]
+                /role!get.action=perms["角色管理"]
+                /role!add.action=perms["角色管理"]
+                /role!update.action=perms["角色管理"]
+                /role!delete.action=perms["角色管理"]
+                /role!listByPage.action=perms["角色管理"]
+
+                #角色权限
+                /roleMenuSet.html=perms["角色权限设置"]
+                /role!readRoleMenus.action=perms["角色权限设置"]
+                /role!updateRoleMenus.action=perms["角色权限设置"]
+
+                #用户角色
+                /empRoleSet.html=perms["用户角色设置"]
+                /emp!readEmpRoles.action=perms["用户角色设置"]
+                /emp!updateEmpRoles.action=perms["用户角色设置"]
+
+                #重置密码
+                /pwd.html=perms["重置密码"]
+                /emp!updatePwd_reset.action=perms["重置密码"]
+
+                #功能引用
+                /emp!listByPage.action=perms2["重置密码","员工"]
+                /emp!list.action=perms2["用户角色设置","库存变更记录"]
+
+                /goodstype!list.action=perms["商品"]
+                /goods!list.action=perms2["我的采购订单","我的销售订单","库存查询","库存变更记录"]
+
+                /store_mylist.action=perms2["采购入库","销售订单出库"]
+                /store!list.action=perms2["库存查询","库存变更记录"]
+
+                /supplier!list.action=perms2["我的采购订单","我的销售订单"]
+
+                /dep!list.action=perms["员工"]
+
+                /role!list.action=perms["角色权限设置"]
+                
+                #销售订单退货
+                /returnorderdetail!doInStore.action=perms["销售退货订单入库"]
+                /returnorders!addSaleReturnOrder.action=perms["销售订单退货登记"]
+                /returnorders!doCheck.action=perms["销售退货订单审核"]
+                /returnorders!listByPage.action=perms["销售退货订单审核"]
+                
+                
+                
+                #采购订单退货
+                /returnorders!add.action=perms["采购退货登记"]
+                /returnorders!listByPage.action=perms["采购退货审核"]
+                /returnorders!type1outGoodsDoCheck.action=perms["采购退货审核"]
+                /returnorders!listByPage.action=perms["采购退货订单出库"]
+                /returnorderdetail!returnOrderOutStore.action=perms["采购退货订单出库"]
+                
+                #统计分析
+                /report!orderReport.action=perms["销售退货统计图"]
+                /returnReport!returnTrendReport.action=perms["销售退货趋势"]
+                
+                #盘盈盘亏
+                /inventory!doCheck.action=perms["盘盈盘亏审核"]
+                /inventory!listByPage.action=perms["盘盈盘亏查询"]
+                /inventory!listByPage.action=perms["盘盈盘亏审核"]
+                /inventory!listByPage.action=perms["盘盈盘亏登记"]
+                /inventory!add.action=perms["盘盈盘亏登记"]
+                
+                
+                #登陆用户修改密码
+                /emp!updatePwd.action=authc
+
+                #登陆后才能访问
+                /** =authc
+            </value>
+        </property>
+        
+    </bean>
+    <!-- 安全管理器 -->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="realm" ref="erpRealm"></property>
+	</bean>
+   
+    <!-- 自定义realm 作用：认证与授权，查询数据库 -->
+    <bean id="erpRealm" class="cn.itcast.erp.realm.ErpRealm">
+		<property name="authorizationCacheName" value="shiro-authorizationCache"/>
+        <property name="cacheManager" ref="shiroCacheManager"/>
+	</bean>
+	<!-- 配置shiroCacheManager缓存 -->
+	<bean id="shiroCacheManager" class="org.apache.shiro.cache.MemoryConstrainedCacheManager"></bean>
+    <!-- 内置的授权过滤器实现的是并且的关系，不满足需求，重写改为或者关系，只要有一个符合就放行 -->
+    <bean id="myFilter" class="cn.itcast.erp.filter.MyAuthorizationFilter"></bean>
+    <!-- jedis连接池 -->
+    <bean id="jedisPool" class="redis.clients.jedis.JedisPool">
+        <constructor-arg index="0" value="192.168.43.208"></constructor-arg>
+    </bean>
+</beans>

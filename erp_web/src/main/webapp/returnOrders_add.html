@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>退货订单管理</title>
+<link rel="stylesheet" type="text/css" href="ui/themes/default/easyui.css"></link>
+<link rel="stylesheet" type="text/css" href="ui/themes/icon.css"></link>
+<link rel="stylesheet" type="text/css" href="css/table.css"></link>
+<script type="text/javascript" src="ui/jquery.min.js"></script>
+<script type="text/javascript" src="ui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="ui/locale/easyui-lang-zh_CN.js"></script>
+<script type="text/javascript" src="ui/jquery.serializejson.min.js"></script>
+<script type="text/javascript" src="ui/date.js"></script>
+<script type="text/javascript" src="js/utils.js"></script>
+<script type="text/javascript" src="js/returnOrders_add.js"></script>
+<script type="text/javascript">
+
+
+</script>
+</head>
+<body>
+<div style="height:2px;"></div>
+<!-- 销售订单退货显示区域 -->
+<table id="grid"></table>
+<!-- 销售订单退货详细增加区域 -->
+<div id="editDlg" style="padding:8px;">
+    <form id="editForm">
+		<table>
+            <tr>
+            	<td>客户:</td>
+			    <td><input id="supplier" name="t.supplieruuid"> </td>
+			</tr>
+        </table>
+    </form>
+    <div style="height:2px;"></div>
+    <!--销售退货订单详情的增加  -->
+	<table id="grid_add"></table>
+	<div style="height:2px;"></div>
+	
+	
+	
+</div>
+</body>
+</html>

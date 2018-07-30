@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>退货订单管理</title>
+    <link rel="stylesheet" type="text/css" href="ui/themes/default/easyui.css"></link>
+    <link rel="stylesheet" type="text/css" href="ui/themes/icon.css"></link>
+    <link rel="stylesheet" type="text/css" href="css/table.css"></link>
+    <script type="text/javascript" src="ui/jquery.min.js"></script>
+    <script type="text/javascript" src="ui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="ui/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="ui/jquery.serializejson.min.js"></script>
+    <script type="text/javascript" src="ui/date.js"></script>
+    <script type="text/javascript" src="js/utils.js"></script>
+    <script type="text/javascript" src="js/returnorders_in_add.js"></script>
+    <script type="text/javascript" src="js/returnorders_in_myOrders.js"></script>
+</head>
+<body>
+
+<table id="grid"></table>
+
+<div id="addReturnOrdersDlg" style="padding:2px;">
+    <form id="orderForm">
+        采购订单:<input name="t.ordersuuid" id="ordersuuid"/>
+    </form>
+    <div style="height:2px;"></div>
+    <table id="addReturnOrdersGrid"></table>
+</div>
+</body>
+</html>
